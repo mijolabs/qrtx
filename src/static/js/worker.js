@@ -1,10 +1,10 @@
-import { prepareZXingModule, readBarcodes } from "https://unpkg.com/zxing-wasm@2/dist/es/reader/index.js";
+import { prepareZXingModule, readBarcodes } from "./zxing/reader.js";
 
 prepareZXingModule({
   overrides: {
     locateFile: (path, prefix) =>
       path.endsWith(".wasm")
-        ? "https://unpkg.com/zxing-wasm@2/dist/reader/zxing_reader.wasm"
+        ? "/static/js/zxing/zxing_reader.wasm"
         : prefix + path,
   },
 });

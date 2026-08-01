@@ -53,7 +53,7 @@ async function start() {
   const captureFps = Number(cfgCapFps.value);
   totalWorkers = Number(cfgWorkers.value);
 
-  fallbackImportP = import("https://unpkg.com/zxing-wasm@2/dist/es/reader/index.js").catch(() => null);
+  fallbackImportP = import("/static/js/zxing/reader.js").catch(() => null);
 
   startBtn.style.display = "none";
   settings.style.display = "none";
@@ -149,7 +149,7 @@ async function checkFallback() {
     overrides: {
       locateFile: (path, prefix) =>
         path.endsWith(".wasm")
-          ? "https://unpkg.com/zxing-wasm@2/dist/reader/zxing_reader.wasm"
+          ? "/static/js/zxing/zxing_reader.wasm"
           : prefix + path,
     },
   });
