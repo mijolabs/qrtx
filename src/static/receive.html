@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=1.0, user-scalable=no">
+  <title>qrtx — receive</title>
+  <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+  <h1>qrtx <small>— fountain QR transfer</small></h1>
+  <div class="hint" id="stats">Point the camera at the sender's QR stream</div>
+
+  <details class="settings" id="settings">
+    <summary>Settings</summary>
+    <div class="row">
+      <label>
+        capture width
+        <select id="cfg-width">
+          <option>960</option>
+          <option selected>1280</option>
+          <option>1920</option>
+        </select>
+      </label>
+      <label>
+        capture fps
+        <select id="cfg-capfps">
+          <option>30</option>
+          <option selected>60</option>
+        </select>
+      </label>
+      <label>
+        decode workers
+        <select id="cfg-workers">
+          <option>1</option>
+          <option selected>2</option>
+          <option>3</option>
+        </select>
+      </label>
+    </div>
+  </details>
+
+  <button id="start">Start camera</button>
+
+  <div class="metrics" id="metrics">
+    <div class="metric"><div class="k">capture fps</div><div class="v" id="m-cap">&mdash;</div></div>
+    <div class="metric"><div class="k">decode fps</div><div class="v amber" id="m-dec">&mdash;</div></div>
+    <div class="metric"><div class="k">goodput</div><div class="v amber" id="m-rate">&mdash;</div></div>
+    <div class="metric"><div class="k">elapsed</div><div class="v" id="m-time">&mdash;</div></div>
+    <div class="metric"><div class="k">frames new/dup</div><div class="v" id="m-frames">&mdash;</div></div>
+    <div class="metric"><div class="k">blocks K</div><div class="v" id="m-k">&mdash;</div></div>
+    <div class="metric"><div class="k">block len</div><div class="v" id="m-block">&mdash;</div></div>
+    <div class="metric"><div class="k">payload</div><div class="v" id="m-payload">&mdash;</div></div>
+  </div>
+
+  <div class="preview" id="preview">
+    <video id="video" muted playsinline></video>
+  </div>
+
+  <div class="progress" id="progress"><div id="bar"></div></div>
+  <div id="result"></div>
+
+  <script type="module" src="/static/js/receiver.js"></script>
+</body>
+</html>

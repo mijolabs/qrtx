@@ -1,0 +1,12 @@
+.venv
+.git
+.gitignore
+.ruff_cache
+.pytest_cache
+.claude
+__pycache__
+*.pyc
+uv.lock
+Dockerfile
+.dockerignore
+README.md

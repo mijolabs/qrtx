@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>qrtx — send</title>
+  <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+  <h1>qrtx <small>— fountain QR transfer</small></h1>
+  <div id="specs"></div>
+  <span id="status"></span>
+
+  <div class="drop-zone" id="drop-zone">
+    <span class="icon">&#128193;</span>
+    <strong>Drop a file here</strong>
+    <p>or click to select</p>
+    <input type="file" id="file-input" hidden>
+  </div>
+
+  <details class="settings">
+    <summary>Settings</summary>
+    <div class="row">
+      <label>
+        fps
+        <select id="cfg-fps">
+          <option>10</option>
+          <option>15</option>
+          <option>20</option>
+          <option selected>24</option>
+          <option>30</option>
+        </select>
+      </label>
+      <label>
+        bytes / frame
+        <select id="cfg-bytes">
+          <option>500</option>
+          <option>1000</option>
+          <option selected>1465</option>
+          <option>2953</option>
+        </select>
+      </label>
+      <label>
+        display size
+        <input id="cfg-size" type="range" min="300" max="1200" step="50" value="900">
+      </label>
+    </div>
+  </details>
+
+  <canvas id="qr" width="16" height="16"></canvas>
+  <p class="hint">The stream loops forever — stop when the receiver is done.</p>
+
+  <script type="module" src="/static/js/sender.js"></script>
+</body>
+</html>
