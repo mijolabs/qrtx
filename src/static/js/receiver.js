@@ -21,6 +21,7 @@ let startTs = 0;
 let captureGen = 0;
 let done = false;
 let stream = null;
+let statsInterval = null;
 
 const workers = [];
 const busy = [];
@@ -121,7 +122,7 @@ async function start() {
 
   const gen = ++captureGen;
   scheduleFrame(gen);
-  setInterval(updateStats, 500);
+  statsInterval = setInterval(updateStats, 500);
 
   try {
     await navigator.wakeLock?.request("screen");
@@ -182,13 +183,17 @@ function scheduleFrame(gen) {
 
 const offscreen = document.createElement("canvas");
 const offCtx = offscreen.getContext("2d", { willReadFrequently: true });
+let offW = 0;
+let offH = 0;
 
 function captureFrame() {
   if (done || video.videoWidth === 0) return;
   const w = video.videoWidth;
   const h = video.videoHeight;
-  offscreen.width = w;
-  offscreen.height = h;
+  if (w !== offW || h !== offH) {
+    offscreen.width = offW = w;
+    offscreen.height = offH = h;
+  }
   offCtx.drawImage(video, 0, 0);
   const img = offCtx.getImageData(0, 0, w, h);
 
@@ -259,14 +264,26 @@ function finish(payload, hashOk, header) {
   fallbackDecode = null;
   bar.style.width = "100%";
 
+  if (statsInterval) {
+    clearInterval(statsInterval);
+    statsInterval = null;
+  }
+
   if (stream) {
     for (const track of stream.getTracks()) track.stop();
   }
   for (const w of workers) w.terminate();
 
-  const elapsed = ((performance.now() - startTs) / 1000).toFixed(1);
+  const elapsedMs = performance.now() - startTs;
+  const elapsed = (elapsedMs / 1000).toFixed(1);
   const size = payload.length;
-  const rate = (size / 1024 / parseFloat(elapsed)).toFixed(1);
+  const avgRate = (size / 1024 / (elapsedMs / 1000)).toFixed(1);
+  const avgDecFps = (decoder.framesNew / (elapsedMs / 1000)).toFixed(1);
+  const overhead = (decoder.framesNew / decoder.k).toFixed(2);
+
+  metric("rate").textContent = `${avgRate} KB/s`;
+  metric("time").textContent = `${elapsed}s`;
+  metric("frames").textContent = `${decoder.framesNew} / ${decoder.framesDup}`;
 
   const blob = new Blob([payload], { type: "application/octet-stream" });
   const url = URL.createObjectURL(blob);
@@ -274,9 +291,10 @@ function finish(payload, hashOk, header) {
   result.innerHTML = `
     <div class="complete">
       <h2>Transfer complete</h2>
-      <p>${(size / 1024).toFixed(1)} KB in ${elapsed}s (${rate} KB/s)</p>
-      <p>Hash: ${hashOk ? "verified ✓" : "MISMATCH ✗"}</p>
-      <p>${decoder.framesNew} frames received, ${decoder.framesDup} duplicates</p>
+      <p>${(size / 1024).toFixed(1)} KB in ${elapsed}s</p>
+      <p>Avg speed: ${avgRate} KB/s &middot; Avg decode: ${avgDecFps} fps</p>
+      <p>Frames: ${decoder.framesNew} new, ${decoder.framesDup} duplicate (${overhead}x overhead)</p>
+      <p>Hash: ${hashOk ? "verified" : "MISMATCH"}</p>
       <a href="${url}" download="received_file" class="download-btn">Download file</a>
     </div>
   `;
