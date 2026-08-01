@@ -21,6 +21,7 @@ self.onmessage = async (e) => {
   }
 };
 
-readBarcodes(new ImageData(8, 8), { formats: ["QRCode"] })
-  .catch(() => undefined)
-  .then(() => self.postMessage({ id: -1, bytes: null }));
+readBarcodes(new ImageData(8, 8), { formats: ["QRCode"] }).then(
+  () => self.postMessage({ id: -1, bytes: null }),
+  () => self.postMessage({ id: -2, bytes: null }),
+);

@@ -27,6 +27,15 @@ const busy = [];
 const captureTimes = [];
 const decodeTimes = [];
 
+let fallbackMode = false;
+let fallbackReady = false;
+let fallbackDecode = null;
+let fallbackBusy = false;
+let workersReady = 0;
+let workersFailed = 0;
+let totalWorkers = 0;
+let fallbackImportP = null;
+
 const cfgWidth = document.getElementById("cfg-width");
 const cfgCapFps = document.getElementById("cfg-capfps");
 const cfgWorkers = document.getElementById("cfg-workers");
@@ -41,7 +50,9 @@ async function start() {
 
   const captureW = Number(cfgWidth.value);
   const captureFps = Number(cfgCapFps.value);
-  const workerCount = Number(cfgWorkers.value);
+  totalWorkers = Number(cfgWorkers.value);
+
+  fallbackImportP = import("https://unpkg.com/zxing-wasm@2/dist/reader/index.js").catch(() => null);
 
   startBtn.style.display = "none";
   settings.style.display = "none";
@@ -70,22 +81,43 @@ async function start() {
 
   const track = stream.getVideoTracks()[0];
   const s = track.getSettings();
-  statsEl.textContent = `${s.width}×${s.height} @ ${s.frameRate} fps`;
+  const camLabel = `${s.width}×${s.height} @ ${s.frameRate} fps`;
+  statsEl.textContent = `${camLabel} — starting decoder…`;
 
-  for (let i = 0; i < workerCount; i++) {
+  for (let i = 0; i < totalWorkers; i++) {
     const w = new Worker("/static/js/worker.js", { type: "module" });
+
+    w.onerror = () => {
+      workersFailed++;
+      checkFallback();
+    };
+
     w.onmessage = (e) => {
       const { id, bytes } = e.data;
-      if (id === -1) return;
+      if (id === -1) {
+        workersReady++;
+        statsEl.textContent = camLabel;
+        return;
+      }
+      if (id === -2) {
+        workersFailed++;
+        checkFallback();
+        return;
+      }
       busy[id] = false;
       if (bytes) {
         decodeTimes.push(performance.now());
         onDecoded(new Uint8Array(bytes));
       }
     };
+
     workers.push(w);
     busy.push(false);
   }
+
+  setTimeout(() => {
+    if (workersReady === 0 && !fallbackMode && !done) checkFallback();
+  }, 4000);
 
   const gen = ++captureGen;
   scheduleFrame(gen);
@@ -94,6 +126,43 @@ async function start() {
   try {
     await navigator.wakeLock?.request("screen");
   } catch {}
+}
+
+async function checkFallback() {
+  if (fallbackMode || done || workersReady > 0) return;
+
+  fallbackMode = true;
+  statsEl.textContent = "Workers unavailable — loading fallback decoder…";
+
+  for (const w of workers) w.terminate();
+
+  const mod = await fallbackImportP;
+  if (!mod) {
+    statsEl.textContent = "Decoder failed to load";
+    return;
+  }
+
+  const { prepareZXingModule, readBarcodes } = mod;
+
+  prepareZXingModule({
+    overrides: {
+      locateFile: (path, prefix) =>
+        path.endsWith(".wasm")
+          ? "https://unpkg.com/zxing-wasm@2/dist/reader/zxing_reader.wasm"
+          : prefix + path,
+    },
+  });
+
+  try {
+    await readBarcodes(new ImageData(8, 8), { formats: ["QRCode"] });
+  } catch {
+    statsEl.textContent = "WASM decoder failed to initialize";
+    return;
+  }
+
+  fallbackDecode = readBarcodes;
+  fallbackReady = true;
+  statsEl.textContent = "Main-thread decoder ready";
 }
 
 function scheduleFrame(gen) {
@@ -125,6 +194,11 @@ function captureFrame() {
 
   captureTimes.push(performance.now());
 
+  if (fallbackMode) {
+    decodeFallback(img);
+    return;
+  }
+
   let slot = -1;
   for (let i = 0; i < workers.length; i++) {
     if (!busy[i]) { slot = i; break; }
@@ -135,6 +209,20 @@ function captureFrame() {
     { id: slot, buf: img.data.buffer, w, h },
     [img.data.buffer],
   );
+}
+
+async function decodeFallback(img) {
+  if (!fallbackReady || fallbackBusy) return;
+  fallbackBusy = true;
+  try {
+    const results = await fallbackDecode(img, { formats: ["QRCode"], maxNumberOfSymbols: 1 });
+    const r = results.find((x) => x.isValid && x.bytes.length > 0);
+    if (r) {
+      decodeTimes.push(performance.now());
+      onDecoded(new Uint8Array(r.bytes));
+    }
+  } catch {}
+  fallbackBusy = false;
 }
 
 function onDecoded(bytes) {
@@ -167,6 +255,8 @@ function onDecoded(bytes) {
 
 function finish(payload, hashOk, header) {
   done = true;
+  fallbackReady = false;
+  fallbackDecode = null;
   bar.style.width = "100%";
 
   if (stream) {
@@ -208,7 +298,7 @@ function updateStats() {
     : "—";
 
   metric("cap").textContent = capFps.toFixed(0);
-  metric("dec").textContent = decFps.toFixed(0);
+  metric("dec").textContent = fallbackMode ? `${decFps.toFixed(0)} (1T)` : decFps.toFixed(0);
   metric("rate").textContent = `${goodput} KB/s`;
   metric("time").textContent = `${elapsed}s`;
   metric("frames").textContent = `${decoder.framesNew} / ${decoder.framesDup}`;
