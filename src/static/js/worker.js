@@ -1,4 +1,4 @@
-import { prepareZXingModule, readBarcodes } from "https://unpkg.com/zxing-wasm@2/dist/reader/index.js";
+import { prepareZXingModule, readBarcodes } from "https://unpkg.com/zxing-wasm@2/dist/es/reader/index.js";
 
 prepareZXingModule({
   overrides: {

@@ -52,7 +52,7 @@ async function start() {
   const captureFps = Number(cfgCapFps.value);
   totalWorkers = Number(cfgWorkers.value);
 
-  fallbackImportP = import("https://unpkg.com/zxing-wasm@2/dist/reader/index.js").catch(() => null);
+  fallbackImportP = import("https://unpkg.com/zxing-wasm@2/dist/es/reader/index.js").catch(() => null);
 
   startBtn.style.display = "none";
   settings.style.display = "none";
