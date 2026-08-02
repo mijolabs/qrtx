@@ -2,7 +2,9 @@
 
 Transfer files between devices using only a screen and a camera. No network, no app install, no pairing — the payload travels as light.
 
-One device displays the file as a stream of animated QR codes; the other points its camera at the screen and reconstructs the file. Fountain codes make it resilient to missed frames: any sufficient subset of frames is enough to recover the data.
+One device displays a file as a stream of animated QR codes; the other points its camera at the screen and reconstructs the file. Fountain codes make it resilient to missed frames: any sufficient subset of frames is enough to recover the data.
+
+**[Try it live](https://mijolabs.github.io/qrtx/)**
 
 Based on [decimen-optical-transfer](https://github.com/bashalarmistalt/decimen-optical-transfer), a proof-of-concept that demonstrated fountain-coded QR transfer with fixed demo payloads. qrtx takes the same core algorithm and turns it into a deployable tool that can send any file.
 
@@ -14,37 +16,30 @@ Based on [decimen-optical-transfer](https://github.com/bashalarmistalt/decimen-o
 
 3. The sender loops forever. The receiver can start at any point, miss frames, and still reconstruct the file — dropped frames cost time but never correctness.
 
-## Quick start
+## Local development
 
-Requires Python 3.14+ and [uv](https://docs.astral.sh/uv/).
-
-```sh
-uv sync
-uv run python -m uvicorn src.app:app --host 0.0.0.0 --port 8000
-```
-
-Open `https://<your-ip>:8000` on both devices. Camera access requires HTTPS (or localhost).
-
-### Docker
+Serve the `site/` directory with any static file server:
 
 ```sh
-docker build -t qrtx .
-docker run -p 8000:8000 qrtx
+python3 -m http.server -d site
+# or
+npx serve site
 ```
+
+Open `http://localhost:8000` (or whatever port your server uses). Camera access requires HTTPS or localhost.
 
 ## Differences from decimen-optical-transfer
 
-The upstream project is a proof-of-concept that streams fixed demo payloads (512 KB or 2 MB pre-baked images). qrtx is a deployable tool: drop any file onto `/send`, point a phone camera at the screen, and download the result from `/receive`.
+The upstream project is a proof-of-concept that only streams fixed demo payloads.
 
 | | decimen-optical-transfer | qrtx |
 |---|---|---|
 | Purpose | PoC / demo | Deployable file transfer tool |
 | File selection | Fixed demo payloads only | Any file (drag-and-drop / picker) |
 | Receiver output | Displays image in browser | Download button for any file type |
-| Deployment | Vite dev server on LAN | Docker / uvicorn |
-| Language | TypeScript + Vite | Vanilla JS (no build step) |
+| Deployment | Vite dev server on LAN | Hosted publicly, doesn't require setup |
+| Language | TypeScript + Vite | Vanilla JS |
 | QR decoding | zxing-wasm (bundled by Vite) | zxing-wasm (vendored) |
-| Test suite | None | pytest (protocol + fountain codec) |
 | iOS Safari | No fallback | Main-thread decoder fallback |
 
 The core algorithm is identical: fountain codes, binary frame protocol, soliton distribution, FNV-1a integrity check, same default settings.

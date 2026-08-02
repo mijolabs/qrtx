@@ -53,7 +53,7 @@ async function start() {
   const captureFps = Number(cfgCapFps.value);
   totalWorkers = Number(cfgWorkers.value);
 
-  fallbackImportP = import("/static/js/zxing/reader.js").catch(() => null);
+  fallbackImportP = import("./zxing/reader.js").catch(() => null);
 
   startBtn.style.display = "none";
   settings.style.display = "none";
@@ -86,7 +86,7 @@ async function start() {
   statsEl.textContent = `${camLabel} — starting decoder…`;
 
   for (let i = 0; i < totalWorkers; i++) {
-    const w = new Worker("/static/js/worker.js", { type: "module" });
+    const w = new Worker(new URL("./worker.js", import.meta.url), { type: "module" });
 
     w.onerror = () => {
       workersFailed++;
@@ -149,7 +149,7 @@ async function checkFallback() {
     overrides: {
       locateFile: (path, prefix) =>
         path.endsWith(".wasm")
-          ? "/static/js/zxing/zxing_reader.wasm"
+          ? new URL("./zxing/zxing_reader.wasm", import.meta.url).href
           : prefix + path,
     },
   });

@@ -4,7 +4,7 @@ prepareZXingModule({
   overrides: {
     locateFile: (path, prefix) =>
       path.endsWith(".wasm")
-        ? "/static/js/zxing/zxing_reader.wasm"
+        ? new URL("./zxing/zxing_reader.wasm", import.meta.url).href
         : prefix + path,
   },
 });
