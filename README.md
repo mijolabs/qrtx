@@ -47,3 +47,10 @@ The core algorithm is identical: fountain codes, binary frame protocol, soliton 
 ## License
 
 MIT
+
+Based on [decimen-optical-transfer](https://github.com/bashalarmistalt/decimen-optical-transfer) by BashAlarmist, used under the MIT License. Copyright (c) 2026 BashAlarmist.
+
+Vendored dependencies carry their own licenses:
+
+- **[Nayuki qrcodegen](https://www.nayuki.io/page/qr-code-generator-library)** — MIT (see header in `site/js/qr.js`)
+- **[zxing-wasm](https://github.com/Sec-ant/zxing-wasm)** / **[zxing-cpp](https://github.com/zxing-cpp/zxing-cpp)** — MIT + Apache 2.0 (see `site/js/zxing/LICENSE`)
