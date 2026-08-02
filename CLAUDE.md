@@ -7,7 +7,7 @@ Fountain-coded QR file transfer. Port of [decimen-optical-transfer](https://gith
 - **Frontend**: Vanilla ES module JavaScript, no build step, no bundler
 - **Hosting**: GitHub Pages (deployed via GitHub Actions on push to `main`)
 - **QR encode**: Vendored [Project Nayuki qrcodegen](https://www.nayuki.io/page/qr-code-generator-library) (`site/js/qr.js`)
-- **QR decode**: [zxing-wasm v2](https://github.com/niclasvaneyk/zxing-wasm) vendored in `site/js/zxing/`
+- **QR decode**: [zxing-wasm v2](https://github.com/Sec-ant/zxing-wasm) vendored in `site/js/zxing/`
 
 ## Project layout
 
